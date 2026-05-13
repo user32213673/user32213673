@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: default
+resources:
+  - ../../base/nginx-svc
+  - ../../base/spring-svc
+  - ../../base/mysql-svc
+  - networkpolicy.yaml
+images:
+  - name: nginx-svc
+    newName: nginx-service-v2
+  - name: spring-svc
+    newName: spring-service-v2
+  - name: mysql-svc
+    newName: mysql-service-v2
