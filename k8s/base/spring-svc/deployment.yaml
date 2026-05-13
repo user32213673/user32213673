@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-svc
+  namespace: default
+  labels:
+    app: spring-svc
+    app.kubernetes.io/managed-by: grad-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spring-svc
+  template:
+    metadata:
+      labels:
+        app: spring-svc
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: spring-svc
+          image: "eclipse-temurin:21-jre-alpine"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              memory: "1Gi"
+          envFrom:
+            - configMapRef:
+                name: spring-svc-config
+            - secretRef:
+                name: spring-svc-secret
+                optional: true
+          startupProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            periodSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 3
