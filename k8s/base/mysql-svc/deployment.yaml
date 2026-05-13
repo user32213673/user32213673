@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql-svc
+  namespace: default
+  labels:
+    app: mysql-svc
+    app.kubernetes.io/managed-by: grad-deploy
+spec:
+  serviceName: mysql-svc
+  selector:
+    matchLabels:
+      app: mysql-svc
+  template:
+    metadata:
+      labels:
+        app: mysql-svc
+    spec:
+      securityContext:
+        runAsUser: 999
+      containers:
+        - name: mysql-svc
+          image: "mysql:8.0"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3306
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+          envFrom:
+            - configMapRef:
+                name: mysql-svc-config
+            - secretRef:
+                name: mysql-svc-secret
+                optional: true
+          startupProbe:
+            exec:
+              command:
+              - "mysqladmin"
+              - "ping"
+              - "-h"
+              - "localhost"
+            failureThreshold: 20
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command:
+              - "mysqladmin"
+              - "ping"
+              - "-h"
+              - "localhost"
+            failureThreshold: 3
+            periodSeconds: 30
+          readinessProbe:
+            exec:
+              command:
+              - "mysqladmin"
+              - "ping"
+              - "-h"
+              - "localhost"
+            failureThreshold: 3
+            periodSeconds: 10
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: "standard"
+        resources:
+          requests:
+            storage: 10Gi
